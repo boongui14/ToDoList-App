@@ -1,11 +1,14 @@
 import { useState, useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Plus, Search, ArrowUpDown } from 'lucide-react';
+import { Plus, Search, ArrowUpDown, Lock } from 'lucide-react';
 import { Layout } from './components/Layout';
 import { TaskBoard } from './components/TaskBoard';
 import { AddTaskModal } from './components/AddTaskModal';
 import { EditTaskModal } from './components/EditTaskModal';
+import { LoginModal } from './components/LoginModal';
 import { useTasks } from './hooks/useTasks';
+import { useAuth } from './hooks/useAuth';
+import { AuthProvider } from './context/AuthContext';
 import { Dashboard } from './pages/Dashboard';
 import { CalendarPage } from './pages/CalendarPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -16,7 +19,9 @@ type SortOrder = 'asc' | 'desc';
 
 function TasksPage() {
   const { tasks, addTask, updateTask, updateTaskStatus, deleteTask } = useTasks();
+  const { isAdmin, login } = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('dueDate');
@@ -62,6 +67,14 @@ function TasksPage() {
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  const handleAddTaskClick = () => {
+    if (isAdmin) {
+      setIsAddModalOpen(true);
+    } else {
+      setShowLoginModal(true);
+    }
   };
 
   return (
@@ -110,10 +123,13 @@ function TasksPage() {
 
           {/* Add Task Button */}
           <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-blue-600 shadow-lg shadow-blue-500/30 transition-all active:scale-95 whitespace-nowrap"
+            onClick={handleAddTaskClick}
+            className={`flex items-center gap-2 px-4 py-2.5 font-medium rounded-xl shadow-lg transition-all active:scale-95 whitespace-nowrap ${isAdmin
+              ? 'bg-primary text-white hover:bg-blue-600 shadow-blue-500/30'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 shadow-slate-200/50'
+              }`}
           >
-            <Plus size={20} />
+            {isAdmin ? <Plus size={20} /> : <Lock size={18} />}
             Add Task
           </button>
         </div>
@@ -125,6 +141,7 @@ function TasksPage() {
         onStatusChange={updateTaskStatus}
         onDelete={deleteTask}
         onEdit={handleEditTask}
+        isAdmin={isAdmin}
       />
 
       {/* Add Modal */}
@@ -140,6 +157,14 @@ function TasksPage() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         onSave={handleSaveEdit}
+        isAdmin={isAdmin}
+      />
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLogin={login}
       />
     </div>
   );
@@ -162,9 +187,11 @@ function AppContent() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

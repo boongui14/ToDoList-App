@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Tag, Plus, Trash2, User, ListChecks, Check } from 'lucide-react';
+import { X, Calendar, Tag, Plus, Trash2, User, ListChecks, Check, ChevronUp, ChevronDown, Minus, Square, Maximize2 } from 'lucide-react';
 import type { Task, TaskStatus, SubTask, Priority } from '../types';
 
 interface EditTaskModalProps {
@@ -7,11 +7,12 @@ interface EditTaskModalProps {
     task: Task | null;
     onClose: () => void;
     onSave: (id: string, data: Partial<Omit<Task, 'id' | 'createdAt'>>) => void;
+    isAdmin?: boolean;
 }
 
 const AVAILABLE_TAGS = ['Design', 'Dev', 'Meeting', 'Personal', 'Urgent'];
 
-export const EditTaskModal: React.FC<EditTaskModalProps> = ({ isOpen, task, onClose, onSave }) => {
+export const EditTaskModal: React.FC<EditTaskModalProps> = ({ isOpen, task, onClose, onSave, isAdmin = true }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState<TaskStatus>('todo');
@@ -24,6 +25,9 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ isOpen, task, onCl
     const [newSubTaskTitle, setNewSubTaskTitle] = useState('');
     const [assigneeName, setAssigneeName] = useState('');
 
+    // Window control states
+    const [isMinimized, setIsMinimized] = useState(false);
+    const [isMaximized, setIsMaximized] = useState(false);
     useEffect(() => {
         if (task) {
             setTitle(task.title);
@@ -108,16 +112,89 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ isOpen, task, onCl
         }
     };
 
+    // Move sub-task up in the list
+    const moveSubTaskUp = (index: number) => {
+        if (index === 0) return;
+        setSubTasks(prev => {
+            const newList = [...prev];
+            [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
+            return newList;
+        });
+    };
 
+    // Move sub-task down in the list
+    const moveSubTaskDown = (index: number) => {
+        if (index === subTasks.length - 1) return;
+        setSubTasks(prev => {
+            const newList = [...prev];
+            [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
+            return newList;
+        });
+    };
+
+    // Minimized view
+    if (isMinimized) {
+        return (
+            <div className="fixed bottom-4 right-4 z-50 bg-white rounded-xl shadow-2xl border border-slate-200 p-3 flex items-center gap-3 min-w-[250px]">
+                <div className="flex-1 truncate">
+                    <span className="text-sm font-medium text-slate-700">{title || 'Edit Task'}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => setIsMinimized(false)}
+                        className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                        title="Restore"
+                    >
+                        <Square size={14} />
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        title="Close"
+                    >
+                        <X size={14} />
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Modal container class based on maximize state
+    const modalContainerClass = isMaximized
+        ? 'bg-white w-full h-full shadow-none rounded-none flex flex-col'
+        : 'bg-white rounded-2xl w-full max-w-md shadow-2xl transform transition-all max-h-[90vh] overflow-hidden flex flex-col';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl transform transition-all max-h-[90vh] overflow-hidden flex flex-col">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm ${isMaximized ? '' : 'p-4'}`}>
+            <div className={modalContainerClass}>
                 <div className="flex justify-between items-center p-6 border-b border-slate-100">
-                    <h2 className="text-xl font-bold text-slate-900">Edit Task</h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-                        <X size={24} />
-                    </button>
+                    <h2 className="text-xl font-bold text-slate-900">{isAdmin ? 'Edit Task' : 'View Task'}</h2>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setIsMinimized(true)}
+                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                            title="Minimize"
+                            type="button"
+                        >
+                            <Minus size={16} />
+                        </button>
+                        <button
+                            onClick={() => setIsMaximized(!isMaximized)}
+                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                            title={isMaximized ? 'Restore' : 'Maximize'}
+                            type="button"
+                        >
+                            {isMaximized ? <Square size={16} /> : <Maximize2 size={16} />}
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                            title="Close"
+                            type="button"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
@@ -155,28 +232,60 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ isOpen, task, onCl
                             )}
                         </label>
                         <div className="space-y-2">
-                            {subTasks.map(subTask => (
+                            {subTasks.map((subTask, index) => (
                                 <div key={subTask.id} className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg group">
+                                    {/* Reorder buttons - visible to all, functional for admins only */}
+                                    {subTasks.length > 1 && (
+                                        <div className={`flex flex-col gap-0.5 ${isAdmin ? 'opacity-0 group-hover:opacity-100' : 'opacity-40'} transition-opacity`}>
+                                            <button
+                                                type="button"
+                                                onClick={() => isAdmin && moveSubTaskUp(index)}
+                                                disabled={!isAdmin || index === 0}
+                                                className={`p-0.5 rounded transition-colors ${!isAdmin ? 'text-slate-300 cursor-not-allowed' :
+                                                        index === 0 ? 'text-slate-200 cursor-not-allowed' :
+                                                            'text-slate-400 hover:text-primary hover:bg-primary/10'
+                                                    }`}
+                                                title={isAdmin ? 'Move up' : 'View only'}
+                                            >
+                                                <ChevronUp size={12} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => isAdmin && moveSubTaskDown(index)}
+                                                disabled={!isAdmin || index === subTasks.length - 1}
+                                                className={`p-0.5 rounded transition-colors ${!isAdmin ? 'text-slate-300 cursor-not-allowed' :
+                                                        index === subTasks.length - 1 ? 'text-slate-200 cursor-not-allowed' :
+                                                            'text-slate-400 hover:text-primary hover:bg-primary/10'
+                                                    }`}
+                                                title={isAdmin ? 'Move down' : 'View only'}
+                                            >
+                                                <ChevronDown size={12} />
+                                            </button>
+                                        </div>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={() => toggleSubTaskCompletion(subTask.id)}
+                                        disabled={!isAdmin}
                                         className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${subTask.completed
                                             ? 'bg-success border-success text-white'
                                             : 'border-slate-300 hover:border-primary'
-                                            }`}
+                                            } ${!isAdmin ? 'cursor-not-allowed opacity-60' : ''}`}
                                     >
                                         {subTask.completed && <Check size={12} />}
                                     </button>
                                     <span className={`flex-1 text-sm ${subTask.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
                                         {subTask.title}
                                     </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => removeSubTask(subTask.id)}
-                                        className="text-slate-400 hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
+                                    {isAdmin && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeSubTask(subTask.id)}
+                                            className="text-slate-400 hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                             <div className="flex items-center gap-2">

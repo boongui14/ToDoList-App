@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, CheckSquare, Calendar, Settings, Menu, X } from 'lucide-react';
+import { AdminSwitcher } from './AdminSwitcher';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -21,10 +22,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex h-screen bg-background overflow-hidden">
             {/* Sidebar */}
             <aside className="w-64 bg-white/80 backdrop-blur-md border-r border-slate-200 hidden md:flex flex-col">
-                <div className="p-6">
+                <div className="p-6 flex items-center justify-between">
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                         TaskFlow
                     </h1>
+                    <AdminSwitcher />
                 </div>
 
                 <nav className="flex-1 px-4 space-y-2">
@@ -64,7 +66,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <Menu size={24} className="text-slate-600" />
                     )}
                 </button>
-                <span className="ml-4 font-bold text-lg">TaskFlow</span>
+                <span className="ml-4 font-bold text-lg flex-1">TaskFlow</span>
+                <AdminSwitcher />
             </div>
 
             {/* Mobile Menu Overlay */}

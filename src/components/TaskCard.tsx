@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Pencil, Trash2, AlertCircle, ListChecks } from 'lucide-react';
+import { Calendar, Pencil, Trash2, AlertCircle, ListChecks, Eye } from 'lucide-react';
 import { format, isPast, parseISO, startOfDay } from 'date-fns';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
@@ -10,6 +10,7 @@ interface TaskCardProps {
     onStatusChange: (id: string, status: Task['status']) => void;
     onDelete: (id: string) => void;
     onEdit: (task: Task) => void;
+    isAdmin?: boolean;
 }
 
 const statusColors = {
@@ -26,7 +27,7 @@ const tagColors: Record<string, string> = {
     'Urgent': 'bg-red-100 text-red-700',
 };
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onStatusChange, onEdit }) => {
+export const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onStatusChange, onEdit, isAdmin = true }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: task.id,
         data: { task },
@@ -91,22 +92,26 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onStatusChan
                     ))}
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* View button - always visible */}
                     <button
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={() => onEdit(task)}
                         className="text-slate-400 hover:text-primary p-1 rounded hover:bg-slate-50"
-                        title="Edit task"
+                        title={isAdmin ? 'Edit task' : 'View task'}
                     >
-                        <Pencil size={16} />
+                        {isAdmin ? <Pencil size={16} /> : <Eye size={16} />}
                     </button>
-                    <button
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={() => onDelete(task.id)}
-                        className="text-slate-400 hover:text-danger p-1 rounded hover:bg-slate-50"
-                        title="Delete task"
-                    >
-                        <Trash2 size={16} />
-                    </button>
+                    {/* Delete button - admin only */}
+                    {isAdmin && (
+                        <button
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={() => onDelete(task.id)}
+                            className="text-slate-400 hover:text-danger p-1 rounded hover:bg-slate-50"
+                            title="Delete task"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -149,8 +154,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onStatusChan
                     <select
                         value={task.status}
                         onPointerDown={(e) => e.stopPropagation()}
-                        onChange={(e) => onStatusChange(task.id, e.target.value as Task['status'])}
-                        className="text-xs font-medium bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-600 outline-none focus:border-primary cursor-pointer hover:bg-slate-100"
+                        onChange={(e) => isAdmin && onStatusChange(task.id, e.target.value as Task['status'])}
+                        disabled={!isAdmin}
+                        className={`text-xs font-medium bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-600 outline-none focus:border-primary ${isAdmin ? 'cursor-pointer hover:bg-slate-100' : 'cursor-not-allowed opacity-70'}`}
                     >
                         <option value="todo">To Do</option>
                         <option value="doing">In Progress</option>

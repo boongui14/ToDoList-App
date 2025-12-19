@@ -9,9 +9,10 @@ interface TaskBoardProps {
     onStatusChange: (id: string, status: Task['status']) => void;
     onDelete: (id: string) => void;
     onEdit: (task: Task) => void;
+    isAdmin?: boolean;
 }
 
-export const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onStatusChange, onDelete, onEdit }) => {
+export const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onStatusChange, onDelete, onEdit, isAdmin = true }) => {
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -52,6 +53,7 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onStatusChange, onD
                         onStatusChange={onStatusChange}
                         onDelete={onDelete}
                         onEdit={onEdit}
+                        isAdmin={isAdmin}
                     />
                 ))}
             </div>

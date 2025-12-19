@@ -10,6 +10,7 @@ interface TaskColumnProps {
     onStatusChange: (id: string, status: Task['status']) => void;
     onDelete: (id: string) => void;
     onEdit: (task: Task) => void;
+    isAdmin?: boolean;
 }
 
 const columnStyles = {
@@ -30,7 +31,8 @@ export const TaskColumn: React.FC<TaskColumnProps> = ({
     tasks,
     onStatusChange,
     onDelete,
-    onEdit
+    onEdit,
+    isAdmin = true
 }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: status,
@@ -59,6 +61,7 @@ export const TaskColumn: React.FC<TaskColumnProps> = ({
                         onStatusChange={onStatusChange}
                         onDelete={onDelete}
                         onEdit={onEdit}
+                        isAdmin={isAdmin}
                     />
                 ))}
             </div>

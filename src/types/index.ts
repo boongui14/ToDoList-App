@@ -6,6 +6,7 @@ export interface SubTask {
     id: string;
     title: string;
     completed: boolean;
+    order?: number; // Optional for backward compatibility with existing data
 }
 
 // Staff member interface for task assignment
