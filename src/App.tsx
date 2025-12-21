@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Plus, Search, ArrowUpDown, Lock } from 'lucide-react';
 import { Layout } from './components/Layout';
@@ -8,7 +8,9 @@ import { EditTaskModal } from './components/EditTaskModal';
 import { LoginModal } from './components/LoginModal';
 import { useTasks } from './hooks/useTasks';
 import { useAuth } from './hooks/useAuth';
+import { useSettings } from './hooks/useSettings';
 import { AuthProvider } from './context/AuthContext';
+import { SettingsProvider } from './context/SettingsContext';
 import { Dashboard } from './pages/Dashboard';
 import { CalendarPage } from './pages/CalendarPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -172,6 +174,47 @@ function TasksPage() {
 
 function AppContent() {
   const { tasks } = useTasks();
+  const { settings } = useSettings();
+
+  // Apply Appearance Settings
+  useEffect(() => {
+    const root = document.documentElement;
+    const { darkMode, themeColor, fontSize } = settings.appearance;
+
+    // Dark Mode
+    if (darkMode) {
+      root.style.setProperty('--color-background', '#0f172a');
+      root.style.setProperty('--color-surface', '#1e293b');
+      // For text colors, we might need more comprehensive dark mode variables
+      // But for now, let's swap the main backgrounds and ensure text is readable
+      document.body.classList.add('dark');
+      document.body.style.color = '#f8fafc';
+    } else {
+      root.style.setProperty('--color-background', '#F8F9FA');
+      root.style.setProperty('--color-surface', '#FFFFFF');
+      document.body.classList.remove('dark');
+      document.body.style.color = '#0f172a';
+    }
+
+    // Theme Color
+    const themeParams: Record<string, string> = {
+      blue: '#3B82F6',
+      purple: '#8B5CF6',
+      green: '#10B981',
+      orange: '#F97316',
+      pink: '#EC4899',
+    };
+    root.style.setProperty('--color-primary', themeParams[themeColor] || themeParams.blue);
+
+    // Font Size
+    const fontSizeMap = {
+      small: '14px',
+      medium: '16px',
+      large: '18px',
+    };
+    root.style.fontSize = fontSizeMap[fontSize];
+
+  }, [settings.appearance]);
 
   return (
     <Layout>
@@ -188,9 +231,11 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+      <SettingsProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </SettingsProvider>
     </AuthProvider>
   );
 }

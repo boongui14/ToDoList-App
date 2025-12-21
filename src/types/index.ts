@@ -39,3 +39,36 @@ export interface Task {
 }
 
 export type CreateTaskInput = Omit<Task, 'id' | 'createdAt'>;
+
+// User profile settings
+export interface UserProfile {
+    name: string;
+    email: string;
+    avatar: string;
+}
+
+// Appearance settings
+export type ThemeColor = 'blue' | 'purple' | 'green' | 'orange' | 'pink';
+export type FontSize = 'small' | 'medium' | 'large';
+
+export interface AppearanceSettings {
+    darkMode: boolean;
+    themeColor: ThemeColor;
+    fontSize: FontSize;
+}
+
+// Notification settings
+export interface NotificationSettings {
+    dueDateReminders: boolean;
+    weeklySummary: boolean;
+    emailNotifications: boolean;
+    taskAssignmentAlerts: boolean;
+    pushNotifications: boolean;
+}
+
+// Combined user settings
+export interface UserSettings {
+    profile: UserProfile;
+    appearance: AppearanceSettings;
+    notifications: NotificationSettings;
+}
